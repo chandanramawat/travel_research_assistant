@@ -104,7 +104,7 @@ if user_input:
 
             try:
                 api_response = requests.post(
-                    "http://localhost:8000/ask",
+                    "https://travel-research-assistant.onrender.com",
                     json={
                         "message": user_input,
                         "session_id": st.session_state.session_id,  # 🆕 same ID every message this session
