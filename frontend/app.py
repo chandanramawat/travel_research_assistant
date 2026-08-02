@@ -423,309 +423,311 @@ import streamlit as st
 import requests
 
 st.set_page_config(
-    page_title="AI Travel Planner",
+    page_title="AI Travel Research Assistant",
     page_icon="✈️",
     layout="centered"
 )
 
 # ---------------------------------------------------------------------------
-# Theme: light lavender background + purple→blue gradient accent
-# (inspired by dSilo's marketing site palette)
+# Design system
+# Canvas: soft violet-white · Ink: warm near-black · Accent: violet -> blue
+# Display face: Sora (geometric, distinctive) · Body: Inter · Data/tags: JetBrains Mono
+# Signature element: a small pipeline diagram in the hero, because that's what
+# this product actually is — a supervisor agent routing to specialist agents.
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
-    :root {
-        --bg-primary: #FAFAFF;
-        --bg-card: #FFFFFF;
-        --bg-soft: #F3F0FC;
-        --border-soft: #E6E1F7;
-        --text-primary: #17151F;
-        --text-secondary: #6B7280;
-        --accent-purple: #7C3AED;
-        --accent-purple-dark: #6D28D9;
-        --accent-blue: #3B82F6;
-        --gradient: linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%);
-        --shadow-card: 0 1px 2px rgba(23,21,31,0.04), 0 8px 24px rgba(124,58,237,0.06);
-    }
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
 
-    /* Eliminate every dark-bleed surface Streamlit ships by default */
-    html, body,
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stHeader"],
-    [data-testid="stBottom"],
-    [data-testid="stBottomBlockContainer"],
-    [data-testid="stMainBlockContainer"],
-    .main {
-        background-color: var(--bg-primary) !important;
-    }
-    [data-testid="stHeader"] { border-bottom: none; }
-    [data-testid="stBottom"] > div { background-color: var(--bg-primary) !important; }
+:root {
+    --bg: #F7F6FB;
+    --surface: #FFFFFF;
+    --surface-muted: #F0EDFA;
+    --ink: #14121B;
+    --ink-soft: #6B6478;
+    --line: #E4DFF3;
+    --violet: #7C3AED;
+    --violet-dark: #5F27C9;
+    --blue: #3E6DF6;
+    --gradient: linear-gradient(90deg, var(--violet) 0%, var(--blue) 100%);
+    --green: #1E9E6B;
+    --green-bg: #E4F6ED;
+    --blue-bg: #E8EEFF;
+    --violet-bg: #F1E8FF;
+    --gray-bg: #EFEDF3;
+    --shadow: 0 1px 2px rgba(20,18,27,0.04), 0 10px 28px rgba(124,58,237,0.08);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-pill: 999px;
+}
 
-    .block-container { padding-top: 2rem; max-width: 780px; }
+html, body, .stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"],
+[data-testid="stBottom"],
+[data-testid="stBottomBlockContainer"],
+[data-testid="stMainBlockContainer"],
+.main {
+    background-color: var(--bg) !important;
+}
+[data-testid="stHeader"] { border-bottom: none; }
+[data-testid="stBottom"] > div { background-color: var(--bg) !important; }
 
-    /* Eyebrow + header */
-    .eyebrow {
-        text-align: center;
-        font-size: 0.8rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: var(--accent-purple);
-        text-transform: uppercase;
-        line-height: 1.4;
-        margin-bottom: 0.8rem;
-    }
-    .title {
-        text-align: center;
-        font-size: 2.6rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        line-height: 1.15;
-        color: var(--text-primary);
-        white-space: nowrap;
-    }
-    @media (max-width: 600px) {
-        .title { font-size: 1.6rem; white-space: normal; }
-    }
-    .title .accent {
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .subtitle {
-        text-align: center;
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-        margin-bottom: 2.2rem;
-    }
+.stApp, .stApp p, .stApp span, .stApp li, .stApp label {
+    font-family: 'Inter', sans-serif;
+}
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: var(--bg-card);
-        border-right: 1px solid var(--border-soft);
-    }
-    section[data-testid="stSidebar"] * { color: var(--text-primary) !important; }
-    section[data-testid="stSidebar"] h2 {
-        font-size: 1.05rem;
-        font-weight: 700;
-    }
-    section[data-testid="stSidebar"] hr { border-color: var(--border-soft) !important; }
+.block-container { padding-top: 1.6rem; max-width: 760px; }
+#MainMenu, footer { visibility: hidden; }
 
-    section[data-testid="stSidebar"] div[data-testid="stAlertContainer"] {
-        border-radius: 10px;
-        border: 1px solid var(--border-soft);
-        box-shadow: var(--shadow-card);
-    }
-    section[data-testid="stSidebar"] div[data-baseweb="notification"] {
-        background-color: var(--bg-soft) !important;
-        border-radius: 10px;
-    }
+/* ---------------- Hero ---------------- */
+.hero { text-align: center; padding: 1rem 0.5rem 0.5rem; }
 
-    /* Sidebar "Try asking" quick-select buttons */
-    section[data-testid="stSidebar"] .stButton>button {
-        background: var(--bg-soft) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border-soft) !important;
-        border-radius: 10px !important;
-        text-align: left !important;
-        justify-content: flex-start !important;
-        width: 100%;
-        font-weight: 500 !important;
-        padding: 0.55rem 0.9rem !important;
-        box-shadow: none !important;
-        margin-bottom: 0.4rem;
-        transition: border-color 0.15s ease, color 0.15s ease;
-    }
-    section[data-testid="stSidebar"] .stButton>button:hover {
-        background: var(--bg-card) !important;
-        border-color: var(--accent-purple) !important;
-        color: var(--accent-purple-dark) !important;
-    }
+.hero-bar {
+    width: 46px;
+    height: 4px;
+    border-radius: 4px;
+    margin: 0 auto 1.3rem;
+    background: linear-gradient(90deg, var(--violet), var(--blue), var(--violet));
+    background-size: 200% 100%;
+    animation: bar-shift 3s ease-in-out infinite;
+}
+@keyframes bar-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
 
-    /* Fallback styling if st.code is used anywhere in the sidebar */
-    section[data-testid="stSidebar"] [data-testid="stCode"] {
-        background-color: var(--bg-soft) !important;
-        border: 1px solid var(--border-soft) !important;
-        border-radius: 8px !important;
-    }
-    section[data-testid="stSidebar"] [data-testid="stCode"] pre,
-    section[data-testid="stSidebar"] [data-testid="stCode"] code,
-    section[data-testid="stSidebar"] [data-testid="stCode"] span {
-        background-color: transparent !important;
-        color: var(--accent-purple-dark) !important;
-    }
+.eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--violet);
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+}
 
-    /* Chat messages */
-    div[data-testid="stChatMessage"] {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-soft);
-        border-radius: 16px;
-        padding: 0.9rem 1.1rem;
-        margin-bottom: 0.9rem;
-        box-shadow: var(--shadow-card);
-        animation: fadeInUp 0.35s ease;
-    }
-    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
-        color: var(--text-primary) !important;
-        line-height: 1.55;
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(6px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+.title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.9rem, 5vw, 2.7rem);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ink);
+}
+.title .accent {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
-    /* Avatars -> circular, on-theme */
-    div[data-testid="stChatMessageAvatarUser"] {
-        background: var(--text-primary) !important;
-        border-radius: 50% !important;
-    }
-    div[data-testid="stChatMessageAvatarAssistant"] {
-        background: var(--gradient) !important;
-        border-radius: 50% !important;
-    }
+.subtitle {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
 
-    /* Chat input */
-    div[data-testid="stChatInput"] {
-        background-color: var(--bg-card) !important;
-        border: 1.5px solid var(--border-soft) !important;
-        border-radius: 999px !important;
-        box-shadow: var(--shadow-card);
-        padding: 0.2rem 0.2rem 0.2rem 1rem !important;
-    }
-    div[data-testid="stChatInput"]:focus-within {
-        border-color: var(--accent-purple) !important;
-    }
-    div[data-testid="stChatInput"] textarea {
-        color: var(--text-primary) !important;
-    }
-    div[data-testid="stChatInput"] textarea::placeholder {
-        color: var(--text-secondary) !important;
-    }
-    div[data-testid="stChatInput"] button {
-        background: var(--gradient) !important;
-        border-radius: 50% !important;
-        width: 2.1rem;
-        height: 2.1rem;
-    }
-    div[data-testid="stChatInput"] button svg { fill: #ffffff !important; }
+/* ---- Pipeline diagram: the real architecture, as the signature visual ---- */
+.pipeline { margin-top: 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+.pl-node {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: 0.4rem 1rem;
+    box-shadow: var(--shadow);
+}
+.pl-node.root { color: var(--violet-dark); border-color: #DCC8FA; }
+.pl-arrow { color: var(--ink-soft); font-size: 0.85rem; line-height: 1; }
+.pl-branch { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
 
-    /* Generic buttons -> solid purple pill, matching "Request a demo" */
-    .stButton>button {
-        background: var(--gradient);
-        color: #ffffff;
-        border: none;
-        border-radius: 999px;
-        padding: 0.5rem 1.4rem;
-        font-weight: 600;
-        box-shadow: var(--shadow-card);
-    }
-    .stButton>button:hover { opacity: 0.9; }
+/* ---------------- Sidebar ---------------- */
+section[data-testid="stSidebar"] {
+    background-color: var(--surface);
+    border-right: 1px solid var(--line);
+}
+section[data-testid="stSidebar"] * { color: var(--ink) !important; font-family: 'Inter', sans-serif !important; }
+section[data-testid="stSidebar"] hr { border-color: var(--line) !important; }
 
-    /* Tool badges (soft pill chips on light bg) */
-    .tool-badge-weather { background: #E4F5EA; color: #1E8E5A; padding: 5px 13px; border-radius: 20px; font-size: 0.78rem; display: inline-block; margin: 4px 4px 0 0; font-weight: 600; }
-    .tool-badge-research { background: #E5EEFF; color: #2563EB; padding: 5px 13px; border-radius: 20px; font-size: 0.78rem; display: inline-block; margin: 4px 4px 0 0; font-weight: 600; }
-    .tool-badge-itinerary { background: #F1E7FF; color: #7C3AED; padding: 5px 13px; border-radius: 20px; font-size: 0.78rem; display: inline-block; margin: 4px 4px 0 0; font-weight: 600; }
-    .tool-badge-none { background: #F1F1F4; color: #6B7280; padding: 5px 13px; border-radius: 20px; font-size: 0.78rem; display: inline-block; margin: 4px 4px 0 0; font-weight: 600; }
+.sb-heading {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft) !important;
+    margin: 0.2rem 0 0.9rem 0 !important;
+}
 
-    .agent-flow { background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px; margin: 8px 0; font-size: 0.8rem; color: var(--text-secondary); }
+/* Agent timeline (a genuine handoff sequence, so numbering is meaningful) */
+.timeline { position: relative; padding-left: 1.6rem; margin-bottom: 0.4rem; }
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 0.55rem;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    width: 1px;
+    background: var(--line);
+}
+.tl-item { position: relative; padding-bottom: 1.1rem; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+    position: absolute;
+    left: -1.6rem;
+    top: 0.15rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+    background: var(--surface-muted);
+    border: 1px solid var(--line);
+    color: var(--violet-dark);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tl-title { font-weight: 700; font-size: 0.87rem; color: var(--ink); }
+.tl-desc { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.1rem; }
 
-    #MainMenu, footer { visibility: hidden; }
+/* Tool chips */
+.tool-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+}
+.tool-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.tool-chip-green { background: var(--green-bg); color: var(--green); }
+.tool-chip-blue { background: var(--blue-bg); color: var(--blue); }
 
-    /* ---- Hero section with subtle dot-grid backdrop ---- */
-    .hero {
-        position: relative;
-        padding: 1.6rem 0 0.6rem 0;
-        margin-bottom: 0.4rem;
-        overflow: hidden;
-        border-radius: 28px;
-    }
-    .hero::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-image: radial-gradient(rgba(124,58,237,0.16) 1px, transparent 1px);
-        background-size: 22px 22px;
-        -webkit-mask-image: radial-gradient(ellipse 60% 100% at center, black 0%, transparent 75%);
-        mask-image: radial-gradient(ellipse 60% 100% at center, black 0%, transparent 75%);
-        z-index: 0;
-        pointer-events: none;
-    }
-    .hero > * { position: relative; z-index: 1; }
+/* Sidebar suggestion buttons */
+section[data-testid="stSidebar"] .stButton>button {
+    background: var(--bg) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    width: 100%;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 0.55rem 0.9rem !important;
+    box-shadow: none !important;
+    margin-bottom: 0.4rem;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+section[data-testid="stSidebar"] .stButton>button:hover {
+    background: var(--surface-muted) !important;
+    border-color: var(--violet) !important;
+    color: var(--violet-dark) !important;
+}
 
-    /* ---- Rotating conic-gradient glow border around the title ---- */
-    .title-center {
-        text-align: center;
-        margin: 0.2rem 0 0.4rem 0;
-    }
-    .title-glow-wrap {
-        position: relative;
-        display: inline-block;
-        padding: 2.5px;
-        border-radius: 999px;
-        max-width: 100%;
-        isolation: isolate;   /* creates a local stacking context so the
-                                  z-index layers below stay confined to
-                                  this element instead of leaking out */
-        z-index: 0;
-        vertical-align: middle;
-    }
-    .title-glow-wrap::before,
-    .title-glow-wrap::after {
-        content: "";
-        position: absolute;
-        inset: -2.5px;
-        border-radius: inherit;
-        background: conic-gradient(
-            from 0deg,
-            transparent 0%,
-            transparent 45%,
-            #ffffff 58%,
-            #C4B5FD 68%,
-            #7C3AED 80%,
-            #3B82F6 92%,
-            transparent 100%
-        );
-        animation: title-glow-rotate 2.6s linear infinite;
-    }
-    .title-glow-wrap::before {
-        z-index: 1;
-    }
-    .title-glow-wrap::after {
-        z-index: 0;
-        inset: -6px;
-        filter: blur(18px);
-        opacity: 0.9;
-    }
-    .title-glow-inner {
-        position: relative;
-        z-index: 2;
-        background: var(--bg-primary);
-        border-radius: 999px;
-        padding: 0.7rem 2.2rem;
-    }
-    @keyframes title-glow-rotate {
-        to { transform: rotate(360deg); }
-    }
-    @media (max-width: 600px) {
-        .title-glow-inner { padding: 0.6rem 1.2rem; }
-    }
+/* ---------------- Chat ---------------- */
+div[data-testid="stChatMessage"] {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.9rem;
+    box-shadow: var(--shadow);
+    animation: fade-up 0.3s ease;
+}
+div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
+    color: var(--ink) !important;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+div[data-testid="stChatMessageAvatarUser"] { background: var(--ink) !important; border-radius: 50% !important; }
+div[data-testid="stChatMessageAvatarAssistant"] { background: var(--gradient) !important; border-radius: 50% !important; }
+
+div[data-testid="stChatInput"] {
+    background: var(--surface) !important;
+    border: 1.5px solid var(--line) !important;
+    border-radius: var(--radius-pill) !important;
+    box-shadow: var(--shadow);
+    padding: 0.2rem 0.2rem 0.2rem 1.1rem !important;
+}
+div[data-testid="stChatInput"]:focus-within { border-color: var(--violet) !important; }
+div[data-testid="stChatInput"] textarea { color: var(--ink) !important; font-family: 'Inter', sans-serif !important; }
+div[data-testid="stChatInput"] textarea::placeholder { color: var(--ink-soft) !important; }
+div[data-testid="stChatInput"] button {
+    background: var(--gradient) !important;
+    border-radius: 50% !important;
+    width: 2.1rem;
+    height: 2.1rem;
+}
+div[data-testid="stChatInput"] button svg { fill: #fff !important; }
+
+/* Tool-used tags (mono, technical, matches the agentic product itself) */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.32rem 0.7rem;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tag-weather { background: var(--green-bg); color: var(--green); }
+.tag-research { background: var(--blue-bg); color: var(--blue); }
+.tag-itinerary { background: var(--violet-bg); color: var(--violet-dark); }
+.tag-none { background: var(--gray-bg); color: var(--ink-soft); }
+
+.stButton>button {
+    background: var(--gradient);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.4rem;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+}
 </style>
 """, unsafe_allow_html=True)
 
-# Header
+# ---------------------------------------------------------------------------
+# Hero
+# ---------------------------------------------------------------------------
 st.markdown(
     '''
     <div class="hero">
+        <div class="hero-bar"></div>
         <div class="eyebrow">Real-time · Multi-agent · AI Travel Intelligence</div>
-        <div class="title-center">
-            <div class="title-glow-wrap">
-                <div class="title-glow-inner">
-                    <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
-                </div>
+        <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
+        <div class="subtitle">Powered by Groq + LangGraph + real-time tools</div>
+        <div class="pipeline">
+            <div class="pl-node root">Supervisor Agent</div>
+            <div class="pl-arrow">&#8595;</div>
+            <div class="pl-branch">
+                <div class="pl-node">Weather</div>
+                <div class="pl-node">Research</div>
+                <div class="pl-node">Itinerary</div>
             </div>
+            <div class="pl-arrow">&#8595;</div>
+            <div class="pl-node root">Synthesizer</div>
         </div>
-        <div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>
     </div>
     ''',
     unsafe_allow_html=True
@@ -733,32 +735,43 @@ st.markdown(
 
 BACKEND_URL = "https://travel-research-assistant.onrender.com/ask/stream"
 
+# ---------------------------------------------------------------------------
 # Sidebar
+# ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("## Agent System")
-    st.markdown("""
-    **How it works:**
-
-    1. **Supervisor Agent**
-       Decides which agent to call
-
-    2. **Weather Agent**
-       Fetches real-time weather
-
-    3. **Research Agent**
-       Searches web via Tavily
-
-    4. **Synthesizer**
-       Creates final answer
-    """)
+    st.markdown('<div class="sb-heading">Agent System</div>', unsafe_allow_html=True)
+    st.markdown('''
+    <div class="timeline">
+        <div class="tl-item">
+            <div class="tl-dot">1</div>
+            <div class="tl-title">Supervisor Agent</div>
+            <div class="tl-desc">Decides which agent to call</div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot">2</div>
+            <div class="tl-title">Weather Agent</div>
+            <div class="tl-desc">Fetches real-time weather</div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot">3</div>
+            <div class="tl-title">Research Agent</div>
+            <div class="tl-desc">Searches the web via Tavily</div>
+        </div>
+        <div class="tl-item">
+            <div class="tl-dot">4</div>
+            <div class="tl-title">Synthesizer</div>
+            <div class="tl-desc">Creates the final answer</div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
 
     st.divider()
-    st.markdown("## Tools Available")
-    st.success("OpenWeatherMap")
-    st.info("Tavily Web Search")
+    st.markdown('<div class="sb-heading">Tools Available</div>', unsafe_allow_html=True)
+    st.markdown('<div class="tool-chip tool-chip-green"><span class="dot"></span>OpenWeatherMap</div>', unsafe_allow_html=True)
+    st.markdown('<div class="tool-chip tool-chip-blue"><span class="dot"></span>Tavily Web Search</div>', unsafe_allow_html=True)
 
     st.divider()
-    st.markdown("## Try asking")
+    st.markdown('<div class="sb-heading">Try Asking</div>', unsafe_allow_html=True)
     suggestions = [
         "Weather in Jaipur?",
         "Best places in Udaipur",
@@ -770,27 +783,28 @@ with st.sidebar:
         if st.button(suggestion, key=f"suggest_{i}", use_container_width=True):
             st.session_state.pending_query = suggestion
 
+# ---------------------------------------------------------------------------
+# Chat state
+# ---------------------------------------------------------------------------
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+TAG_HTML = {
+    "weather": '<span class="tag tag-weather">Weather Tool</span>',
+    "research": '<span class="tag tag-research">Tavily Search</span>',
+    "itinerary": '<span class="tag tag-itinerary">Itinerary Planner</span>',
+    "none": '<span class="tag tag-none">Direct LLM</span>',
+}
+
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
-
         if message["role"] == "assistant":
             tool_used = message.get("tool_used", "none")
-
-            if tool_used == "weather":
-                st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
-            elif tool_used == "research":
-                st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
-            elif tool_used == "itinerary":
-                st.markdown('<span class="tool-badge-itinerary">Itinerary Planner used</span>', unsafe_allow_html=True)
-            else:
-                st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
+            st.markdown(TAG_HTML.get(tool_used, TAG_HTML["none"]), unsafe_allow_html=True)
 
 user_input = st.chat_input("Ask about any travel destination...")
 
@@ -844,14 +858,7 @@ if user_input:
             answer    = "Something went wrong!"
             tool_used = "none"
 
-        if tool_used == "weather":
-            st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
-        elif tool_used == "research":
-            st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
-        elif tool_used == "itinerary":
-            st.markdown('<span class="tool-badge-itinerary">Itinerary Planner used</span>', unsafe_allow_html=True)
-        else:
-            st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
+        st.markdown(TAG_HTML.get(tool_used, TAG_HTML["none"]), unsafe_allow_html=True)
 
     st.session_state.messages.append({
         "role": "assistant",
