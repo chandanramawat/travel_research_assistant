@@ -473,8 +473,19 @@ html, body, .stApp,
 [data-testid="stHeader"] { border-bottom: none; }
 [data-testid="stBottom"] > div { background-color: var(--bg) !important; }
 
-.stApp, .stApp p, .stApp span, .stApp li, .stApp label {
+.stApp, .stApp p {
     font-family: 'Inter', sans-serif;
+}
+
+/* Avatars are rendered with an icon-ligature font (Material Symbols) by
+   Streamlit itself; never touch their font-family, and clip overflow so a
+   font-load hiccup can never visually collide with the message text. */
+div[data-testid="stChatMessageAvatarUser"],
+div[data-testid="stChatMessageAvatarAssistant"] {
+    overflow: hidden;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
 
 .block-container { padding-top: 1.6rem; max-width: 760px; }
@@ -540,6 +551,12 @@ html, body, .stApp,
     border-radius: var(--radius-pill);
     padding: 0.4rem 1rem;
     box-shadow: var(--shadow);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.pl-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124,58,237,0.14);
+    border-color: #DCC8FA;
 }
 .pl-node.root { color: var(--violet-dark); border-color: #DCC8FA; }
 .pl-arrow { color: var(--ink-soft); font-size: 0.85rem; line-height: 1; }
@@ -617,21 +634,50 @@ section[data-testid="stSidebar"] .stButton>button {
     background: var(--bg) !important;
     color: var(--ink) !important;
     border: 1px solid var(--line) !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     text-align: left !important;
     justify-content: flex-start !important;
     width: 100%;
+    min-height: 2.7rem;
     font-weight: 500 !important;
     font-size: 0.85rem !important;
-    padding: 0.55rem 0.9rem !important;
+    padding: 0.6rem 1rem !important;
     box-shadow: none !important;
-    margin-bottom: 0.4rem;
-    transition: border-color .15s ease, color .15s ease, background .15s ease;
+    margin-bottom: 0.45rem;
+    position: relative;
+    transition: transform .15s ease, border-color .15s ease, color .15s ease,
+                background .15s ease, box-shadow .15s ease, padding-right .15s ease;
 }
 section[data-testid="stSidebar"] .stButton>button:hover {
-    background: var(--surface-muted) !important;
+    background: var(--surface) !important;
     border-color: var(--violet) !important;
     color: var(--violet-dark) !important;
+    box-shadow: 0 4px 14px rgba(124,58,237,0.12);
+    transform: translateY(-1px);
+    padding-right: 1.6rem !important;
+}
+section[data-testid="stSidebar"] .stButton>button:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 1px 4px rgba(124,58,237,0.10);
+}
+section[data-testid="stSidebar"] .stButton>button::after {
+    content: "\2192";
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translate(6px, -50%);
+    opacity: 0;
+    transition: transform .15s ease, opacity .15s ease;
+    color: var(--violet);
+    font-weight: 700;
+}
+section[data-testid="stSidebar"] .stButton>button:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+section[data-testid="stSidebar"] .stButton>button:focus-visible {
+    outline: 2px solid var(--violet);
+    outline-offset: 2px;
 }
 
 /* ---------------- Chat ---------------- */
@@ -643,6 +689,11 @@ div[data-testid="stChatMessage"] {
     margin-bottom: 0.9rem;
     box-shadow: var(--shadow);
     animation: fade-up 0.3s ease;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+div[data-testid="stChatMessage"]:hover {
+    box-shadow: 0 4px 20px rgba(124,58,237,0.10);
+    transform: translateY(-1px);
 }
 div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
     color: var(--ink) !important;
@@ -670,8 +721,19 @@ div[data-testid="stChatInput"] textarea::placeholder { color: var(--ink-soft) !i
 div[data-testid="stChatInput"] button {
     background: var(--gradient) !important;
     border-radius: 50% !important;
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    min-width: 2.2rem;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+}
+div[data-testid="stChatInput"] button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+}
+div[data-testid="stChatInput"] button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(124,58,237,0.3);
 }
 div[data-testid="stChatInput"] button svg { fill: #fff !important; }
 
@@ -700,9 +762,20 @@ div[data-testid="stChatInput"] button svg { fill: #fff !important; }
     color: #fff;
     border: none;
     border-radius: var(--radius-pill);
-    padding: 0.5rem 1.4rem;
+    min-height: 2.6rem;
+    padding: 0.55rem 1.5rem;
     font-weight: 600;
-    box-shadow: var(--shadow);
+    box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.stButton>button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(124,58,237,0.32);
+    opacity: 0.96;
+}
+.stButton>button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 6px rgba(124,58,237,0.2);
 }
 </style>
 """, unsafe_allow_html=True)
