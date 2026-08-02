@@ -418,6 +418,20 @@ st.set_page_config(
 # Theme: light lavender background + purple→blue gradient accent
 # (inspired by dSilo's marketing site palette)
 # ---------------------------------------------------------------------------
+import uuid
+import streamlit as st
+import requests
+
+st.set_page_config(
+    page_title="AI Travel Planner",
+    page_icon="✈️",
+    layout="centered"
+)
+
+# ---------------------------------------------------------------------------
+# Theme: light lavender background + purple→blue gradient accent
+# (inspired by dSilo's marketing site palette)
+# ---------------------------------------------------------------------------
 st.markdown("""
 <style>
     :root {
@@ -507,11 +521,39 @@ st.markdown("""
         background-color: var(--bg-soft) !important;
         border-radius: 10px;
     }
-    section[data-testid="stSidebar"] code {
-        background-color: var(--bg-soft) !important;
+
+    /* Sidebar "Try asking" quick-select buttons */
+    section[data-testid="stSidebar"] .stButton>button {
+        background: var(--bg-soft) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-soft) !important;
+        border-radius: 10px !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        width: 100%;
+        font-weight: 500 !important;
+        padding: 0.55rem 0.9rem !important;
+        box-shadow: none !important;
+        margin-bottom: 0.4rem;
+        transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    section[data-testid="stSidebar"] .stButton>button:hover {
+        background: var(--bg-card) !important;
+        border-color: var(--accent-purple) !important;
         color: var(--accent-purple-dark) !important;
-        border: 1px solid var(--border-soft);
-        border-radius: 6px;
+    }
+
+    /* Fallback styling if st.code is used anywhere in the sidebar */
+    section[data-testid="stSidebar"] [data-testid="stCode"] {
+        background-color: var(--bg-soft) !important;
+        border: 1px solid var(--border-soft) !important;
+        border-radius: 8px !important;
+    }
+    section[data-testid="stSidebar"] [data-testid="stCode"] pre,
+    section[data-testid="stSidebar"] [data-testid="stCode"] code,
+    section[data-testid="stSidebar"] [data-testid="stCode"] span {
+        background-color: transparent !important;
+        color: var(--accent-purple-dark) !important;
     }
 
     /* Chat messages */
@@ -522,10 +564,15 @@ st.markdown("""
         padding: 0.9rem 1.1rem;
         margin-bottom: 0.9rem;
         box-shadow: var(--shadow-card);
+        animation: fadeInUp 0.35s ease;
     }
     div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
         color: var(--text-primary) !important;
         line-height: 1.55;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* Avatars -> circular, on-theme */
@@ -585,10 +632,30 @@ st.markdown("""
 
     #MainMenu, footer { visibility: hidden; }
 
+    /* ---- Hero section with subtle dot-grid backdrop ---- */
+    .hero {
+        position: relative;
+        padding: 1.6rem 0 0.6rem 0;
+        margin-bottom: 0.4rem;
+        overflow: hidden;
+        border-radius: 28px;
+    }
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(124,58,237,0.16) 1px, transparent 1px);
+        background-size: 22px 22px;
+        -webkit-mask-image: radial-gradient(ellipse 60% 100% at center, black 0%, transparent 75%);
+        mask-image: radial-gradient(ellipse 60% 100% at center, black 0%, transparent 75%);
+        z-index: 0;
+        pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 1; }
+
     /* ---- Rotating conic-gradient glow border around the title ---- */
     .title-center {
-        display: flex;
-        justify-content: center;
+        text-align: center;
         margin: 0.2rem 0 0.4rem 0;
     }
     .title-glow-wrap {
@@ -598,10 +665,10 @@ st.markdown("""
         border-radius: 999px;
         max-width: 100%;
         isolation: isolate;   /* creates a local stacking context so the
-                                  negative z-index glow layers below stay
-                                  confined to this element instead of
-                                  sinking behind the whole page background */
+                                  z-index layers below stay confined to
+                                  this element instead of leaking out */
         z-index: 0;
+        vertical-align: middle;
     }
     .title-glow-wrap::before,
     .title-glow-wrap::after {
@@ -647,20 +714,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown('<div class="eyebrow">Real-time · Multi-agent · AI Travel Intelligence</div>', unsafe_allow_html=True)
 st.markdown(
     '''
-    <div class="title-center">
-        <div class="title-glow-wrap">
-            <div class="title-glow-inner">
-                <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
+    <div class="hero">
+        <div class="eyebrow">Real-time · Multi-agent · AI Travel Intelligence</div>
+        <div class="title-center">
+            <div class="title-glow-wrap">
+                <div class="title-glow-inner">
+                    <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
+                </div>
             </div>
         </div>
+        <div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>
     </div>
     ''',
     unsafe_allow_html=True
 )
-st.markdown('<div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>', unsafe_allow_html=True)
 
 BACKEND_URL = "https://travel-research-assistant.onrender.com/ask/stream"
 
@@ -689,12 +758,17 @@ with st.sidebar:
     st.info("Tavily Web Search")
 
     st.divider()
-    st.markdown("## Try asking:")
-    st.code("Weather in Jaipur?")
-    st.code("Best places in Udaipur")
-    st.code("Top 5 news today")
-    st.code("Plan a trip to Goa")
-    st.code("3 day itinerary for Udaipur")
+    st.markdown("## Try asking")
+    suggestions = [
+        "Weather in Jaipur?",
+        "Best places in Udaipur",
+        "Top 5 news today",
+        "Plan a trip to Goa",
+        "3 day itinerary for Udaipur",
+    ]
+    for i, suggestion in enumerate(suggestions):
+        if st.button(suggestion, key=f"suggest_{i}", use_container_width=True):
+            st.session_state.pending_query = suggestion
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -719,6 +793,9 @@ for message in st.session_state.messages:
                 st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
 
 user_input = st.chat_input("Ask about any travel destination...")
+
+if not user_input and st.session_state.get("pending_query"):
+    user_input = st.session_state.pop("pending_query")
 
 if user_input:
 
