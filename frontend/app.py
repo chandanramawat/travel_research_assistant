@@ -664,7 +664,6 @@ div[data-testid="stChatMessage"] {
     padding: 0.9rem 1.1rem;
     margin-bottom: 0.9rem;
     box-shadow: var(--shadow);
-    animation: fade-up 0.3s ease;
     transition: box-shadow .2s ease, transform .2s ease;
 }
 div[data-testid="stChatMessage"]:hover {
@@ -675,10 +674,6 @@ div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] li {
     color: var(--ink) !important;
     line-height: 1.6;
     font-size: 0.95rem;
-}
-@keyframes fade-up {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 div[data-testid="stChatMessageAvatarUser"] { background: var(--ink) !important; border-radius: 50% !important; }
