@@ -131,9 +131,13 @@ def synthesizer_node(state: AgentState) -> AgentState:
         )
     else:
         system_prompt = (
-            "You are a helpful travel assistant. Use the conversation history "
-            "to remember facts the user has told you (like their name or "
-            "previously mentioned city) when relevant to answering."
+            "You are a helpful travel assistant. Directly answer the user's "
+            "CURRENT question first and foremost. Only use the conversation "
+            "history to fill in missing details the current question relies "
+            "on (like a name, city, or group size mentioned earlier) or to "
+            "resolve references like 'it' or 'that place'. Do not bring up "
+            "or continue earlier unrelated topics (like a previous trip or "
+            "search) unless the current question is actually about them."
         )
 
     messages = [

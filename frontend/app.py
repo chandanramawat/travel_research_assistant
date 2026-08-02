@@ -463,9 +463,6 @@ html, body, .stApp,
     font-family: 'Inter', sans-serif;
 }
 
-/* Avatars are rendered with an icon-ligature font (Material Symbols) by
-   Streamlit itself; never touch their font-family, and clip overflow so a
-   font-load hiccup can never visually collide with the message text. */
 div[data-testid="stChatMessageAvatarUser"],
 div[data-testid="stChatMessageAvatarAssistant"] {
     overflow: hidden;
@@ -477,7 +474,6 @@ div[data-testid="stChatMessageAvatarAssistant"] {
 .block-container { padding-top: 1.6rem; max-width: 760px; }
 #MainMenu, footer { visibility: hidden; }
 
-/* ---------------- Hero ---------------- */
 .hero { text-align: center; padding: 1rem 0.5rem 0.5rem; }
 
 .hero-bar {
@@ -525,7 +521,6 @@ div[data-testid="stChatMessageAvatarAssistant"] {
     margin-top: 0.5rem;
 }
 
-/* ---- Pipeline diagram: the real architecture, as the signature visual ---- */
 .pipeline { margin-top: 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
 .pl-node {
     font-family: 'JetBrains Mono', monospace;
@@ -548,7 +543,6 @@ div[data-testid="stChatMessageAvatarAssistant"] {
 .pl-arrow { color: var(--ink-soft); font-size: 0.85rem; line-height: 1; }
 .pl-branch { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
 
-/* ---------------- Sidebar ---------------- */
 section[data-testid="stSidebar"] {
     background-color: var(--surface);
     border-right: 1px solid var(--line);
@@ -566,7 +560,6 @@ section[data-testid="stSidebar"] hr { border-color: var(--line) !important; }
     margin: 0.2rem 0 0.9rem 0 !important;
 }
 
-/* Agent timeline (a genuine handoff sequence, so numbering is meaningful) */
 .timeline { position: relative; padding-left: 1.6rem; margin-bottom: 0.4rem; }
 .timeline::before {
     content: "";
@@ -599,7 +592,6 @@ section[data-testid="stSidebar"] hr { border-color: var(--line) !important; }
 .tl-title { font-weight: 700; font-size: 0.87rem; color: var(--ink); }
 .tl-desc { font-size: 0.82rem; color: var(--ink-soft); margin-top: 0.1rem; }
 
-/* Tool chips */
 .tool-chip {
     display: flex;
     align-items: center;
@@ -615,7 +607,6 @@ section[data-testid="stSidebar"] hr { border-color: var(--line) !important; }
 .tool-chip-green { background: var(--green-bg); color: var(--green); }
 .tool-chip-blue { background: var(--blue-bg); color: var(--blue); }
 
-/* Sidebar suggestion buttons */
 section[data-testid="stSidebar"] .stButton>button {
     background: var(--bg) !important;
     color: var(--ink) !important;
@@ -666,7 +657,6 @@ section[data-testid="stSidebar"] .stButton>button:focus-visible {
     outline-offset: 2px;
 }
 
-/* ---------------- Chat ---------------- */
 div[data-testid="stChatMessage"] {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -705,9 +695,6 @@ div[data-testid="stChatInput"] {
 }
 div[data-testid="stChatInput"]:focus-within { border-color: var(--violet) !important; }
 
-/* The textarea itself carries its own dark background from Streamlit's
-   base theme — overriding only the wrapper (above) wasn't enough, which
-   is why typed text was unreadable against a still-dark field. */
 div[data-testid="stChatInput"] textarea,
 div[data-testid="stChatInput"] [data-baseweb="textarea"] {
     background-color: transparent !important;
@@ -720,9 +707,6 @@ div[data-testid="stChatInput"] textarea {
 }
 div[data-testid="stChatInput"] textarea::placeholder { color: var(--ink-soft) !important; opacity: 1; }
 
-/* Send button: solid gradient face + a contained rotating conic-gradient
-   ring + soft blurred glow behind it, isolated so the negative z-index
-   layers can't leak behind the page (same fix as the earlier title bug). */
 div[data-testid="stChatInput"] button {
     position: relative;
     isolation: isolate;
@@ -756,7 +740,6 @@ div[data-testid="stChatInput"] button:hover { transform: scale(1.08); }
 div[data-testid="stChatInput"] button:active { transform: scale(0.95); }
 div[data-testid="stChatInput"] button svg { fill: #fff !important; }
 
-/* Tool-used tags (mono, technical, matches the agentic product itself) */
 .tag {
     display: inline-flex;
     align-items: center;
@@ -799,9 +782,6 @@ div[data-testid="stChatInput"] button svg { fill: #fff !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------------------------
-# Hero
-# ---------------------------------------------------------------------------
 st.markdown(
     '''
     <div class="hero">
@@ -825,11 +805,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-BACKEND_URL = "https://travel-research-assistant.onrender.com/ask/stream"
+# CHANGED: back to the plain (non-streaming) endpoint — see note below.
+BACKEND_URL = "https://travel-research-assistant.onrender.com/ask"
 
-# ---------------------------------------------------------------------------
-# Sidebar
-# ---------------------------------------------------------------------------
 with st.sidebar:
     st.markdown('<div class="sb-heading">Agent System</div>', unsafe_allow_html=True)
     st.markdown('''
@@ -875,9 +853,6 @@ with st.sidebar:
         if st.button(suggestion, key=f"suggest_{i}", use_container_width=True):
             st.session_state.pending_query = suggestion
 
-# ---------------------------------------------------------------------------
-# Chat state
-# ---------------------------------------------------------------------------
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
@@ -915,41 +890,37 @@ if user_input:
 
     with st.chat_message("assistant"):
 
-        # tokens are requested with stream=True, and st.write_stream()
-        # displays them as they arrive (typewriter effect) instead of
-        # waiting for the full answer.
-        try:
-            api_response = requests.post(
-                BACKEND_URL,
-                json={
-                    "message": user_input,
-                    "session_id": st.session_state.session_id,
-                },
-                stream=True,
-                timeout=60
-            )
-            # Headers arrive before the body starts streaming, so this
-            # is available immediately even though the answer text
-            # below hasn't been read yet.
-            tool_used = api_response.headers.get("X-Tool-Used", "none")
+        # CHANGED: reverted from streaming (stream=True + st.write_stream)
+        # back to a plain request. The LLM call inside the graph is a
+        # blocking .invoke(), so streaming never gave a real typing
+        # effect — it only produced a fade-in animation on large content
+        # (like itinerary tables) that looked broken mid-render. This is
+        # simpler and fully reliable.
+        with st.spinner("Thinking..."):
+            try:
+                api_response = requests.post(
+                    BACKEND_URL,
+                    json={
+                        "message": user_input,
+                        "session_id": st.session_state.session_id,
+                    },
+                    timeout=60
+                )
+                data      = api_response.json()
+                answer    = data.get("response", "No response")
+                tool_used = data.get("tool_used", "none")
 
-            def token_stream():
-                for chunk in api_response.iter_content(chunk_size=None, decode_unicode=True):
-                    if chunk:
-                        yield chunk
+            except requests.exceptions.Timeout:
+                st.error("Timeout!")
+                answer    = "Timeout error"
+                tool_used = "none"
 
-            answer = st.write_stream(token_stream())
+            except Exception as e:
+                st.error(f"Error: {e}")
+                answer    = "Something went wrong!"
+                tool_used = "none"
 
-        except requests.exceptions.Timeout:
-            st.error("Timeout!")
-            answer    = "Timeout error"
-            tool_used = "none"
-
-        except Exception as e:
-            st.error(f"Error: {e}")
-            answer    = "Something went wrong!"
-            tool_used = "none"
-
+        st.write(answer)
         st.markdown(TAG_HTML.get(tool_used, TAG_HTML["none"]), unsafe_allow_html=True)
 
     st.session_state.messages.append({
