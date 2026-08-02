@@ -20,31 +20,34 @@ llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
 # Initialize Tavily
 tavily = TavilySearch(max_results=3)
 
-# Node 1 - Supervisor
-def supervisor_node(state: AgentState) -> AgentState:
-    print(f"\n[Supervisor] Question: {state['question']}")
-    question = state["question"].lower()
 
+# NEW: pulled out of supervisor_node so main.py can reuse the same
+# classification logic to know tool_used BEFORE streaming starts
+# (needed to send it as a response header).
+def classify_intent(question: str) -> str:
+    q = question.lower()
     itinerary_keywords = ["itinerary", "day plan", "days in", "day trip", "trip plan", "plan a trip", "plan my trip"]
     weather_keywords = ["weather", "temperature", "climate", "rain", "humid"]
 
-    if any(word in question for word in itinerary_keywords):
-        print("[Supervisor] -> Research Agent (itinerary mode)")
-        return {**state, "tool_used": "itinerary"}
-    elif any(word in question for word in weather_keywords):
-        print("[Supervisor] -> Weather Agent")
-        return {**state, "tool_used": "weather"}
-    else:
-        print("[Supervisor] -> Research Agent")
-        return {**state, "tool_used": "research"}
+    if any(word in q for word in itinerary_keywords):
+        return "itinerary"
+    elif any(word in q for word in weather_keywords):
+        return "weather"
+    return "research"
+
+
+# Node 1 - Supervisor
+def supervisor_node(state: AgentState) -> AgentState:
+    print(f"\n[Supervisor] Question: {state['question']}")
+    tool_used = classify_intent(state["question"])
+    print(f"[Supervisor] -> tool_used: {tool_used}")
+    return {**state, "tool_used": tool_used}
 
 
 # Node 2 - Research Agent
 def research_node(state: AgentState) -> AgentState:
     print(f"\n[Research Agent] Searching: {state['question']}")
     try:
-        # NEW: when building an itinerary, search for attractions/things to do
-        # instead of just the raw question, so the data is more useful.
         if state.get("tool_used") == "itinerary":
             search_query = f"top attractions things to do best places to visit {state['question']}"
         else:
@@ -116,11 +119,6 @@ def synthesizer_node(state: AgentState) -> AgentState:
 
     history = state.get("messages", [])[:-1][-6:]
 
-    print(f"[DEBUG] Total messages in state: {len(state.get('messages', []))}")
-    print(f"[DEBUG] History being sent to LLM: {len(history)} messages")
-
-    # NEW: different system prompt for itinerary requests, asking for a
-    # structured day-by-day plan instead of a plain paragraph answer.
     if tool_used == "itinerary":
         system_prompt = (
             "You are a helpful travel assistant. Create a clear, day-by-day "

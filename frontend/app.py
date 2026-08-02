@@ -26,7 +26,7 @@ st.markdown("""
 st.markdown('<div class="title">AI Travel Research Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>', unsafe_allow_html=True)
 
-BACKEND_URL = "https://travel-research-assistant.onrender.com/ask"
+BACKEND_URL = "https://travel-research-assistant.onrender.com/ask/stream"
 
 # Sidebar
 with st.sidebar:
@@ -96,44 +96,40 @@ if user_input:
 
     with st.chat_message("assistant"):
 
-        with st.status("Agents working...", expanded=True) as status:
-            st.write("Supervisor deciding...")
+        # NEW: streaming — tokens are requested with stream=True, and
+        # st.write_stream() displays them as they arrive (typewriter
+        # effect) instead of waiting for the full answer.
+        try:
+            api_response = requests.post(
+                BACKEND_URL,
+                json={
+                    "message": user_input,
+                    "session_id": st.session_state.session_id,
+                },
+                stream=True,
+                timeout=60
+            )
+            # Headers arrive before the body starts streaming, so this
+            # is available immediately even though the answer text
+            # below hasn't been read yet.
+            tool_used = api_response.headers.get("X-Tool-Used", "none")
 
-            try:
-                api_response = requests.post(
-                    BACKEND_URL,
-                    json={
-                        "message": user_input,
-                        "session_id": st.session_state.session_id,
-                    },
-                    timeout=60
-                )
+            def token_stream():
+                for chunk in api_response.iter_content(chunk_size=None, decode_unicode=True):
+                    if chunk:
+                        yield chunk
 
-                data      = api_response.json()
-                answer    = data.get("response", "No response")
-                tool_used = data.get("tool_used", "none")
+            answer = st.write_stream(token_stream())
 
-                if tool_used == "weather":
-                    st.write("Weather Agent fetching data...")
-                elif tool_used == "research":
-                    st.write("Research Agent searching web...")
+        except requests.exceptions.Timeout:
+            st.error("Timeout!")
+            answer    = "Timeout error"
+            tool_used = "none"
 
-                st.write("Synthesizer creating answer...")
-                status.update(label="Done!", state="complete")
-
-            except requests.exceptions.Timeout:
-                st.error("Timeout!")
-                answer    = "Timeout error"
-                tool_used = "none"
-                status.update(label="Failed", state="error")
-
-            except Exception as e:
-                st.error(f"Error: {e}")
-                answer    = "Something went wrong!"
-                tool_used = "none"
-                status.update(label="Failed", state="error")
-
-        st.write(answer)
+        except Exception as e:
+            st.error(f"Error: {e}")
+            answer    = "Something went wrong!"
+            tool_used = "none"
 
         if tool_used == "weather":
             st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
