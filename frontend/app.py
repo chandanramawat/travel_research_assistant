@@ -409,20 +409,6 @@ import streamlit as st
 import requests
 
 st.set_page_config(
-    page_title="AI Travel Planner",
-    page_icon="✈️",
-    layout="centered"
-)
-
-# ---------------------------------------------------------------------------
-# Theme: light lavender background + purple→blue gradient accent
-# (inspired by dSilo's marketing site palette)
-# ---------------------------------------------------------------------------
-import uuid
-import streamlit as st
-import requests
-
-st.set_page_config(
     page_title="AI Travel Research Assistant",
     page_icon="✈️",
     layout="centered"
@@ -713,28 +699,61 @@ div[data-testid="stChatInput"] {
     border: 1.5px solid var(--line) !important;
     border-radius: var(--radius-pill) !important;
     box-shadow: var(--shadow);
-    padding: 0.2rem 0.2rem 0.2rem 1.1rem !important;
+    padding: 0.35rem 0.35rem 0.35rem 1.3rem !important;
+    overflow: visible !important;
+    min-height: 3.2rem;
 }
 div[data-testid="stChatInput"]:focus-within { border-color: var(--violet) !important; }
-div[data-testid="stChatInput"] textarea { color: var(--ink) !important; font-family: 'Inter', sans-serif !important; }
-div[data-testid="stChatInput"] textarea::placeholder { color: var(--ink-soft) !important; }
+
+/* The textarea itself carries its own dark background from Streamlit's
+   base theme — overriding only the wrapper (above) wasn't enough, which
+   is why typed text was unreadable against a still-dark field. */
+div[data-testid="stChatInput"] textarea,
+div[data-testid="stChatInput"] [data-baseweb="textarea"] {
+    background-color: transparent !important;
+}
+div[data-testid="stChatInput"] textarea {
+    color: var(--ink) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+div[data-testid="stChatInput"] textarea::placeholder { color: var(--ink-soft) !important; opacity: 1; }
+
+/* Send button: solid gradient face + a contained rotating conic-gradient
+   ring + soft blurred glow behind it, isolated so the negative z-index
+   layers can't leak behind the page (same fix as the earlier title bug). */
 div[data-testid="stChatInput"] button {
+    position: relative;
+    isolation: isolate;
     background: var(--gradient) !important;
     border-radius: 50% !important;
-    width: 2.2rem;
-    height: 2.2rem;
-    min-width: 2.2rem;
-    transition: transform .15s ease, box-shadow .15s ease;
-    box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+    width: 2.3rem;
+    height: 2.3rem;
+    min-width: 2.3rem;
+    z-index: 0;
+    transition: transform .15s ease;
 }
-div[data-testid="stChatInput"] button:hover {
-    transform: scale(1.08);
-    box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+div[data-testid="stChatInput"] button::before,
+div[data-testid="stChatInput"] button::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0%, transparent 40%,
+        #ffffff 55%, #C4B5FD 65%,
+        var(--violet) 78%, var(--blue) 90%,
+        transparent 100%
+    );
+    animation: btn-glow-spin 2.4s linear infinite;
 }
-div[data-testid="stChatInput"] button:active {
-    transform: scale(0.95);
-    box-shadow: 0 2px 6px rgba(124,58,237,0.3);
-}
+div[data-testid="stChatInput"] button::before { inset: -3px; z-index: -1; }
+div[data-testid="stChatInput"] button::after  { inset: -7px; z-index: -2; filter: blur(7px); opacity: 0.85; }
+@keyframes btn-glow-spin { to { transform: rotate(360deg); } }
+
+div[data-testid="stChatInput"] button:hover { transform: scale(1.08); }
+div[data-testid="stChatInput"] button:active { transform: scale(0.95); }
 div[data-testid="stChatInput"] button svg { fill: #fff !important; }
 
 /* Tool-used tags (mono, technical, matches the agentic product itself) */
