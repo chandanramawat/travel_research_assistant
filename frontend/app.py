@@ -453,12 +453,13 @@ st.markdown("""
     /* Eyebrow + header */
     .eyebrow {
         text-align: center;
-        font-size: 0.72rem;
+        font-size: 0.8rem;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         color: var(--accent-purple);
         text-transform: uppercase;
-        margin-bottom: 0.6rem;
+        line-height: 1.4;
+        margin-bottom: 0.8rem;
     }
     .title {
         text-align: center;
@@ -467,7 +468,10 @@ st.markdown("""
         letter-spacing: -0.02em;
         line-height: 1.15;
         color: var(--text-primary);
-        padding: 0 0 0.3rem 0;
+        white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+        .title { font-size: 1.6rem; white-space: normal; }
     }
     .title .accent {
         background: var(--gradient);
@@ -580,13 +584,80 @@ st.markdown("""
     .agent-flow { background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px; margin: 8px 0; font-size: 0.8rem; color: var(--text-secondary); }
 
     #MainMenu, footer { visibility: hidden; }
+
+    /* ---- Rotating conic-gradient glow border around the title ---- */
+    .title-center {
+        display: flex;
+        justify-content: center;
+        margin: 0.2rem 0 0.4rem 0;
+    }
+    .title-glow-wrap {
+        position: relative;
+        display: inline-block;
+        padding: 2.5px;
+        border-radius: 999px;
+        max-width: 100%;
+        isolation: isolate;   /* creates a local stacking context so the
+                                  negative z-index glow layers below stay
+                                  confined to this element instead of
+                                  sinking behind the whole page background */
+        z-index: 0;
+    }
+    .title-glow-wrap::before,
+    .title-glow-wrap::after {
+        content: "";
+        position: absolute;
+        inset: -2.5px;
+        border-radius: inherit;
+        background: conic-gradient(
+            from 0deg,
+            transparent 0%,
+            transparent 45%,
+            #ffffff 58%,
+            #C4B5FD 68%,
+            #7C3AED 80%,
+            #3B82F6 92%,
+            transparent 100%
+        );
+        animation: title-glow-rotate 2.6s linear infinite;
+    }
+    .title-glow-wrap::before {
+        z-index: 1;
+    }
+    .title-glow-wrap::after {
+        z-index: 0;
+        inset: -6px;
+        filter: blur(18px);
+        opacity: 0.9;
+    }
+    .title-glow-inner {
+        position: relative;
+        z-index: 2;
+        background: var(--bg-primary);
+        border-radius: 999px;
+        padding: 0.7rem 2.2rem;
+    }
+    @keyframes title-glow-rotate {
+        to { transform: rotate(360deg); }
+    }
+    @media (max-width: 600px) {
+        .title-glow-inner { padding: 0.6rem 1.2rem; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Header
 st.markdown('<div class="eyebrow">Real-time · Multi-agent · AI Travel Intelligence</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="title">AI Travel <span class="accent">Research Assistant</span></div>',
+    '''
+    <div class="title-center">
+        <div class="title-glow-wrap">
+            <div class="title-glow-inner">
+                <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
+            </div>
+        </div>
+    </div>
+    ''',
     unsafe_allow_html=True
 )
 st.markdown('<div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>', unsafe_allow_html=True)
