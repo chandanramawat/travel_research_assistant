@@ -8,7 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# ✅ Custom CSS
+# Custom CSS
 st.markdown("""
 <style>
     .main { background-color: #0f1117; }
@@ -21,52 +21,49 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ✅ Header
-st.markdown('<div class="title">✈️ AI Travel Research Assistant</div>', unsafe_allow_html=True)
+# Header
+st.markdown('<div class="title">AI Travel Research Assistant</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Powered by Groq + LangGraph + Real-time Tools</div>', unsafe_allow_html=True)
 
-# ✅ Sidebar — Agent Info
+BACKEND_URL = "https://travel-research-assistant.onrender.com/ask"
+
+# Sidebar
 with st.sidebar:
-    st.markdown("## 🤖 Agent System")
+    st.markdown("## Agent System")
     st.markdown("""
     **How it works:**
-    
-    1. 🧠 **Supervisor Agent**  
+
+    1. **Supervisor Agent**
        Decides which agent to call
-       
-    2. 🌤️ **Weather Agent**  
+
+    2. **Weather Agent**
        Fetches real-time weather
-       
-    3. 🔍 **Research Agent**  
+
+    3. **Research Agent**
        Searches web via Tavily
-       
-    4. ✍️ **Synthesizer**  
+
+    4. **Synthesizer**
        Creates final answer
     """)
 
     st.divider()
-    st.markdown("## 🛠️ Tools Available")
-    st.success("🌤️ OpenWeatherMap")
-    st.info("🔍 Tavily Web Search")
+    st.markdown("## Tools Available")
+    st.success("OpenWeatherMap")
+    st.info("Tavily Web Search")
 
     st.divider()
-    st.markdown("## 💡 Try asking:")
+    st.markdown("## Try asking:")
     st.code("Weather in Jaipur?")
     st.code("Best places in Udaipur")
     st.code("Top 5 news today")
     st.code("Plan a trip to Goa")
 
-# 🆕 Give this browser session a stable, unique ID — generated once,
-# then reused for every message so the backend's checkpointer can tell
-# this conversation apart from anyone else's.
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
-# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
@@ -75,18 +72,16 @@ for message in st.session_state.messages:
             tool_used = message.get("tool_used", "none")
 
             if tool_used == "weather":
-                st.markdown('<span class="tool-badge-weather">🌤️ Weather Tool used</span>', unsafe_allow_html=True)
+                st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
             elif tool_used == "research":
-                st.markdown('<span class="tool-badge-research">🔍 Tavily Search used</span>', unsafe_allow_html=True)
+                st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
             else:
-                st.markdown('<span class="tool-badge-none">⚡ Direct LLM</span>', unsafe_allow_html=True)
+                st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
 
-# Chat input
 user_input = st.chat_input("Ask about any travel destination...")
 
 if user_input:
 
-    # Show user message
     with st.chat_message("user"):
         st.write(user_input)
 
@@ -95,19 +90,17 @@ if user_input:
         "content": user_input
     })
 
-    # Call FastAPI
     with st.chat_message("assistant"):
 
-        # ✅ Agent flow dikhao
-        with st.status("🤖 Agents working...", expanded=True) as status:
-            st.write("🧠 Supervisor deciding...")
+        with st.status("Agents working...", expanded=True) as status:
+            st.write("Supervisor deciding...")
 
             try:
                 api_response = requests.post(
-                    "https://travel-research-assistant.onrender.com",
+                    BACKEND_URL,
                     json={
                         "message": user_input,
-                        "session_id": st.session_state.session_id,  # 🆕 same ID every message this session
+                        "session_id": st.session_state.session_id,
                     },
                     timeout=60
                 )
@@ -117,35 +110,33 @@ if user_input:
                 tool_used = data.get("tool_used", "none")
 
                 if tool_used == "weather":
-                    st.write("🌤️ Weather Agent fetching data...")
+                    st.write("Weather Agent fetching data...")
                 elif tool_used == "research":
-                    st.write("🔍 Research Agent searching web...")
+                    st.write("Research Agent searching web...")
 
-                st.write("✍️ Synthesizer creating answer...")
-                status.update(label="✅ Done!", state="complete")
+                st.write("Synthesizer creating answer...")
+                status.update(label="Done!", state="complete")
 
             except requests.exceptions.Timeout:
-                st.error("⏱️ Timeout!")
+                st.error("Timeout!")
                 answer    = "Timeout error"
                 tool_used = "none"
-                status.update(label="❌ Failed", state="error")
+                status.update(label="Failed", state="error")
 
             except Exception as e:
-                st.error(f"❌ Error: {e}")
+                st.error(f"Error: {e}")
                 answer    = "Something went wrong!"
                 tool_used = "none"
-                status.update(label="❌ Failed", state="error")
+                status.update(label="Failed", state="error")
 
-        # Answer dikhao
         st.write(answer)
 
-        # Tool badge
         if tool_used == "weather":
-            st.markdown('<span class="tool-badge-weather">🌤️ Weather Tool used</span>', unsafe_allow_html=True)
+            st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
         elif tool_used == "research":
-            st.markdown('<span class="tool-badge-research">🔍 Tavily Search used</span>', unsafe_allow_html=True)
+            st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
         else:
-            st.markdown('<span class="tool-badge-none">⚡ Direct LLM</span>', unsafe_allow_html=True)
+            st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
 
     st.session_state.messages.append({
         "role": "assistant",
