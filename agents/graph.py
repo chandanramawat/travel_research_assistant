@@ -120,14 +120,28 @@ def synthesizer_node(state: AgentState) -> AgentState:
     history = state.get("messages", [])[:-1][-6:]
 
     if tool_used == "itinerary":
-        system_prompt = (
-            "You are a helpful travel assistant. Create a clear, day-by-day "
-            "itinerary (Day 1, Day 2, etc.) using the research data provided. "
-            "If the user specified a number of days, use that; otherwise "
-            "default to a 3-day itinerary. For each day, suggest 2-3 "
-            "activities or places with a short one-line note for each. "
-            "Use the conversation history to remember facts the user has "
-            "told you when relevant."
+         
+            system_prompt =( """
+You are an expert travel assistant.
+
+Format your responses using:
+
+# Heading
+
+## Subheading
+
+- Bullet points
+
+**Bold** where useful.
+
+Never use Markdown tables.
+
+Never use HTML.
+
+Always keep the answer easy to read in Streamlit.
+
+If listing attractions, use numbered lists instead of tables.
+"""
         )
     else:
         system_prompt = (
