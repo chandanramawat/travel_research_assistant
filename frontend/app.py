@@ -16,6 +16,7 @@ st.markdown("""
     .subtitle { text-align: center; color: #888; margin-bottom: 2rem; }
     .tool-badge-weather { background: #1a3a2a; color: #4caf50; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin: 4px; }
     .tool-badge-research { background: #1a2a3a; color: #2196f3; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin: 4px; }
+    .tool-badge-itinerary { background: #2a1a3a; color: #b388ff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin: 4px; }
     .tool-badge-none { background: #2a2a1a; color: #ff9800; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin: 4px; }
     .agent-flow { background: #1a1a2e; border: 1px solid #333; border-radius: 10px; padding: 10px; margin: 8px 0; font-size: 0.8rem; color: #aaa; }
 </style>
@@ -57,6 +58,7 @@ with st.sidebar:
     st.code("Best places in Udaipur")
     st.code("Top 5 news today")
     st.code("Plan a trip to Goa")
+    st.code("3 day itinerary for Udaipur")
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -75,6 +77,8 @@ for message in st.session_state.messages:
                 st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
             elif tool_used == "research":
                 st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
+            elif tool_used == "itinerary":
+                st.markdown('<span class="tool-badge-itinerary">Itinerary Planner used</span>', unsafe_allow_html=True)
             else:
                 st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
 
@@ -135,6 +139,8 @@ if user_input:
             st.markdown('<span class="tool-badge-weather">Weather Tool used</span>', unsafe_allow_html=True)
         elif tool_used == "research":
             st.markdown('<span class="tool-badge-research">Tavily Search used</span>', unsafe_allow_html=True)
+        elif tool_used == "itinerary":
+            st.markdown('<span class="tool-badge-itinerary">Itinerary Planner used</span>', unsafe_allow_html=True)
         else:
             st.markdown('<span class="tool-badge-none">Direct LLM</span>', unsafe_allow_html=True)
 

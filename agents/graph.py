@@ -24,7 +24,14 @@ tavily = TavilySearch(max_results=3)
 def supervisor_node(state: AgentState) -> AgentState:
     print(f"\n[Supervisor] Question: {state['question']}")
     question = state["question"].lower()
-    if any(word in question for word in ["weather", "temperature", "climate", "rain", "humid"]):
+
+    itinerary_keywords = ["itinerary", "day plan", "days in", "day trip", "trip plan", "plan a trip", "plan my trip"]
+    weather_keywords = ["weather", "temperature", "climate", "rain", "humid"]
+
+    if any(word in question for word in itinerary_keywords):
+        print("[Supervisor] -> Research Agent (itinerary mode)")
+        return {**state, "tool_used": "itinerary"}
+    elif any(word in question for word in weather_keywords):
         print("[Supervisor] -> Weather Agent")
         return {**state, "tool_used": "weather"}
     else:
@@ -36,7 +43,14 @@ def supervisor_node(state: AgentState) -> AgentState:
 def research_node(state: AgentState) -> AgentState:
     print(f"\n[Research Agent] Searching: {state['question']}")
     try:
-        results = tavily.invoke(state["question"])
+        # NEW: when building an itinerary, search for attractions/things to do
+        # instead of just the raw question, so the data is more useful.
+        if state.get("tool_used") == "itinerary":
+            search_query = f"top attractions things to do best places to visit {state['question']}"
+        else:
+            search_query = state["question"]
+
+        results = tavily.invoke(search_query)
 
         print(f"[Research Agent] Result type: {type(results)}")
         print(f"[Research Agent] Result: {str(results)[:200]}")
@@ -93,7 +107,9 @@ def weather_node(state: AgentState) -> AgentState:
 # Node 4 - Synthesizer
 def synthesizer_node(state: AgentState) -> AgentState:
     print(f"\n[Synthesizer] Creating final answer...")
-    if state.get("tool_used") == "weather":
+    tool_used = state.get("tool_used")
+
+    if tool_used == "weather":
         context = state.get("weather_result", "")
     else:
         context = state.get("research_result", "")
@@ -103,12 +119,27 @@ def synthesizer_node(state: AgentState) -> AgentState:
     print(f"[DEBUG] Total messages in state: {len(state.get('messages', []))}")
     print(f"[DEBUG] History being sent to LLM: {len(history)} messages")
 
-    messages = [
-        SystemMessage(content=(
+    # NEW: different system prompt for itinerary requests, asking for a
+    # structured day-by-day plan instead of a plain paragraph answer.
+    if tool_used == "itinerary":
+        system_prompt = (
+            "You are a helpful travel assistant. Create a clear, day-by-day "
+            "itinerary (Day 1, Day 2, etc.) using the research data provided. "
+            "If the user specified a number of days, use that; otherwise "
+            "default to a 3-day itinerary. For each day, suggest 2-3 "
+            "activities or places with a short one-line note for each. "
+            "Use the conversation history to remember facts the user has "
+            "told you when relevant."
+        )
+    else:
+        system_prompt = (
             "You are a helpful travel assistant. Use the conversation history "
             "to remember facts the user has told you (like their name or "
             "previously mentioned city) when relevant to answering."
-        )),
+        )
+
+    messages = [
+        SystemMessage(content=system_prompt),
         *history,
         HumanMessage(content=(
             f"Question: {state['question']}\n\n"
@@ -118,9 +149,6 @@ def synthesizer_node(state: AgentState) -> AgentState:
     response = llm.invoke(messages)
     print(f"[Synthesizer] Done!")
 
-    # THIS return statement is the piece that was missing before.
-    # Without it, the function returned None, so "messages" never
-    # actually got saved back into the state/checkpoint.
     return {
         **state,
         "final_answer": response.content,
