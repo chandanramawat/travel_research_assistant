@@ -10,6 +10,7 @@ from langgraph.graph import StateGraph, END
 from agents.state import AgentState
 from langgraph.checkpoint.sqlite import SqliteSaver
 from tools.weather_tool import get_weather
+from tools.flight_tool import search_flights
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,10 +27,13 @@ tavily = TavilySearch(max_results=3)
 # (needed to send it as a response header).
 def classify_intent(question: str) -> str:
     q = question.lower()
+    flight_keywords = ["flight", "flights", "fly from", "airfare", "plane ticket", "air ticket"]
     itinerary_keywords = ["itinerary", "day plan", "days in", "day trip", "trip plan", "plan a trip", "plan my trip"]
     weather_keywords = ["weather", "temperature", "climate", "rain", "humid"]
 
-    if any(word in q for word in itinerary_keywords):
+    if any(word in q for word in flight_keywords):
+        return "flight"
+    elif any(word in q for word in itinerary_keywords):
         return "itinerary"
     elif any(word in q for word in weather_keywords):
         return "weather"
@@ -107,6 +111,42 @@ def weather_node(state: AgentState) -> AgentState:
     return {**state, "weather_result": weather_result}
 
 
+# Node - Flight Agent
+def flight_node(state: AgentState) -> AgentState:
+    print(f"\n[Flight Agent] Question: {state['question']}")
+
+    messages = [
+        SystemMessage(content=(
+            "Extract flight search details from this question. "
+            "Return EXACTLY in this format, nothing else, no explanation: "
+            "DEPARTURE_IATA|ARRIVAL_IATA|YYYY-MM-DD\n"
+            "Use the 3-letter IATA airport code for the cities mentioned "
+            "(e.g. Delhi=DEL, Mumbai=BOM, Jodhpur=JDH, Jaipur=JAI, Goa=GOI, "
+            "Udaipur=UDR, Bangalore=BLR, Chennai=MAA, Kolkata=CCU, Hyderabad=HYD, "
+            "Ahmedabad=AMD, Pune=PNQ). "
+            "If no date is mentioned, use a date 30 days from today. "
+            "Example: 'flight from Jodhpur to Delhi' -> 'JDH|DEL|2026-09-02'"
+        )),
+        HumanMessage(content=state["question"])
+    ]
+    extraction = llm.invoke(messages).content.strip()
+    print(f"[Flight Agent] Extracted: {extraction}")
+
+    try:
+        departure_id, arrival_id, outbound_date = extraction.split("|")
+        flight_result = search_flights.invoke({
+            "departure_id": departure_id.strip(),
+            "arrival_id": arrival_id.strip(),
+            "outbound_date": outbound_date.strip(),
+        })
+        print(f"[Flight Agent] Result: {flight_result[:200]}")
+    except Exception as e:
+        flight_result = f"Could not understand the flight search request: {e}"
+        print(f"[Flight Agent] Error: {e}")
+
+    return {**state, "research_result": flight_result}
+
+
 # Node 4 - Synthesizer
 def synthesizer_node(state: AgentState) -> AgentState:
     print(f"\n[Synthesizer] Creating final answer...")
@@ -120,28 +160,23 @@ def synthesizer_node(state: AgentState) -> AgentState:
     history = state.get("messages", [])[:-1][-6:]
 
     if tool_used == "itinerary":
-         
-            system_prompt =( """
-You are an expert travel assistant.
-
-Format your responses using:
-
-# Heading
-
-## Subheading
-
-- Bullet points
-
-**Bold** where useful.
-
-Never use Markdown tables.
-
-Never use HTML.
-
-Always keep the answer easy to read in Streamlit.
-
-If listing attractions, use numbered lists instead of tables.
-"""
+        system_prompt = (
+            "You are a helpful travel assistant. Create a clear, day-by-day "
+            "itinerary (Day 1, Day 2, etc.) using the research data provided. "
+            "If the user specified a number of days, use that; otherwise "
+            "default to a 3-day itinerary. For each day, suggest 2-3 "
+            "activities or places with a short one-line note for each. "
+            "Use the conversation history to remember facts the user has "
+            "told you when relevant."
+        )
+    elif tool_used == "flight":
+        system_prompt = (
+            "You are a helpful travel assistant. Present the flight search "
+            "results clearly as a short list, one flight option per line "
+            "(airline, price, stops, duration). If the data contains an "
+            "error or no results, say so plainly and suggest the user check "
+            "the city names or date. Do not invent prices that are not in "
+            "the data provided."
         )
     else:
         system_prompt = (
@@ -174,8 +209,11 @@ If listing attractions, use numbered lists instead of tables.
 
 # Routing function
 def route_after_supervisor(state: AgentState) -> str:
-    if state.get("tool_used") == "weather":
+    tool_used = state.get("tool_used")
+    if tool_used == "weather":
         return "weather_agent"
+    elif tool_used == "flight":
+        return "flight_agent"
     return "research_agent"
 
 
@@ -185,6 +223,7 @@ def build_graph():
     graph.add_node("supervisor", supervisor_node)
     graph.add_node("research_agent", research_node)
     graph.add_node("weather_agent", weather_node)
+    graph.add_node("flight_agent", flight_node)
     graph.add_node("synthesizer", synthesizer_node)
     graph.set_entry_point("supervisor")
     graph.add_conditional_edges(
@@ -192,11 +231,13 @@ def build_graph():
         route_after_supervisor,
         {
             "weather_agent": "weather_agent",
+            "flight_agent": "flight_agent",
             "research_agent": "research_agent",
         }
     )
     graph.add_edge("research_agent", "synthesizer")
     graph.add_edge("weather_agent", "synthesizer")
+    graph.add_edge("flight_agent", "synthesizer")
     graph.add_edge("synthesizer", END)
 
     conn = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
