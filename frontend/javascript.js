@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const BACKEND_URL = "http://localhost:8000/ask";
+const BACKEND_URL = "https://tripsaarthi-backend.onrender.com/ask";
 
 // Session id: kept in memory only for this page load (no localStorage —
 // matches a fresh Streamlit session each time you reload the page).

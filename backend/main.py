@@ -14,7 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8080",
-        "https://your-deployed-frontend.com",
+        "https://tripsaarthiai.vercel.app",
     ],
     allow_credentials=False,
     allow_methods=["*"],
