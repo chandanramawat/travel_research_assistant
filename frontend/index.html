@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Travel Research Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-heading">Agent System</div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot">1</div>
+        <div class="tl-title">Supervisor Agent</div>
+        <div class="tl-desc">Decides which agent to call</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">2</div>
+        <div class="tl-title">Weather Agent</div>
+        <div class="tl-desc">Fetches real-time weather</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">3</div>
+        <div class="tl-title">Research Agent</div>
+        <div class="tl-desc">Searches the web via Tavily</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">4</div>
+        <div class="tl-title">Synthesizer</div>
+        <div class="tl-desc">Creates the final answer</div>
+      </div>
+    </div>
+
+    <hr class="sb-divider">
+    <div class="sb-heading">Tools Available</div>
+    <div class="tool-chip tool-chip-green"><span class="dot"></span>OpenWeatherMap</div>
+    <div class="tool-chip tool-chip-blue"><span class="dot"></span>Tavily Web Search</div>
+
+    <hr class="sb-divider">
+    <div class="sb-heading">Try Asking</div>
+    <div class="suggestions">
+      <button class="suggest-btn" data-suggestion="Weather in Jaipur?">Weather in Jaipur?</button>
+      <button class="suggest-btn" data-suggestion="Best places in Udaipur">Best places in Udaipur</button>
+      <button class="suggest-btn" data-suggestion="Top 5 news today">Top 5 news today</button>
+      <button class="suggest-btn" data-suggestion="Plan a trip to Goa">Plan a trip to Goa</button>
+      <button class="suggest-btn" data-suggestion="3 day itinerary for Udaipur">3 day itinerary for Udaipur</button>
+    </div>
+  </aside>
+
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+    <div class="hero">
+      <div class="hero-bar"></div>
+      <div class="eyebrow">Real-time · Multi-agent · AI Travel Intelligence</div>
+      <div class="title">AI Travel <span class="accent">Research Assistant</span></div>
+      <div class="subtitle">Powered by Groq + LangGraph + real-time tools</div>
+      <div class="pipeline">
+        <div class="pl-node root">Supervisor Agent</div>
+        <div class="pl-arrow">↓</div>
+        <div class="pl-branch">
+          <div class="pl-node">Weather</div>
+          <div class="pl-node">Research</div>
+          <div class="pl-node">Itinerary</div>
+        </div>
+        <div class="pl-arrow">↓</div>
+        <div class="pl-node root">Synthesizer</div>
+      </div>
+    </div>
+
+    <div class="chat-shell">
+      <div class="chat-messages" id="chatMessages"></div>
+
+      <div class="chat-input-bar">
+        <div class="chat-input-inner">
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="Ask about any travel destination..."
+            autocomplete="off"
+          >
+          <button id="sendBtn" aria-label="Send message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 12L20 4L14 20L11 13L4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
