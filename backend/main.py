@@ -1,14 +1,12 @@
 from dotenv import load_dotenv
 load_dotenv()
-
-from agents.graph import travel_graph, classify_intent
-from pydantic import BaseModel
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from agents.graph import travel_graph, classify_intent
+from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
 app = FastAPI(title="AI travel assistant")
 app.add_middleware(
     CORSMiddleware,
@@ -20,17 +18,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app = FastAPI(title="AI travel assistant")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "https://your-deployed-frontend.com",  # add once you deploy
-    ],
-    allow_credentials=False,   # you don't need cookies for this flow
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # MODELS
 class ChatRequest(BaseModel):
