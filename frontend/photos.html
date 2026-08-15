@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Photos — TripSaarthi.ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="photos.css">
+</head>
+<body>
+
+<div class="app app-photos">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-heading">TripSaarthi.ai</div>
+    <a class="sb-nav-link" href="index.html">💬 Back to Chat</a>
+
+    <hr class="sb-divider">
+    <div class="sb-heading">Filter by Trip</div>
+    <div class="filter-list" id="filterList">
+      <button class="filter-btn active" data-filter="all">All Trips</button>
+      <button class="filter-btn" data-filter="jaipur">Jaipur</button>
+      <button class="filter-btn" data-filter="udaipur">Udaipur</button>
+      <button class="filter-btn" data-filter="jodhpur">Jodhpur</button>
+      <button class="filter-btn" data-filter="goa">Goa</button>
+      <button class="filter-btn" data-filter="manali">Manali</button>
+      <button class="filter-btn" data-filter="kashmir">Kashmir</button>
+    </div>
+
+    <hr class="sb-divider">
+    <div class="sb-heading">Add Your Photos</div>
+    <p class="sb-note">
+      Drop image files into the <code>photos/</code> folder and reference
+      them in <code>photos.html</code> — each card fills in automatically
+      once the file is found.
+    </p>
+  </aside>
+
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+
+  <!-- ===== Main ===== -->
+  <main class="main main-photos">
+    <div class="hero photos-hero">
+      <div class="hero-bar"></div>
+      <div class="eyebrow">Field Notes · Photo Journal</div>
+      <div class="title">Travel <span class="accent">Memories</span></div>
+      <div class="subtitle">A wall of moments from every trip TripSaarthi has helped plan</div>
+    </div>
+
+    <div class="gallery-shell">
+      <div class="gallery" id="gallery">
+
+        <figure class="photo-card" data-trip="jaipur" style="--rot:-3deg">
+          <div class="photo-thumb" data-src="photos/jaipur-hawa-mahal.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/jaipur-hawa-mahal.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Hawa Mahal, Jaipur</span>
+            <span class="pc-date">Oct 2025</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="udaipur" style="--rot:2deg">
+          <div class="photo-thumb" data-src="photos/udaipur-lake-pichola.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/udaipur-lake-pichola.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Lake Pichola, Udaipur</span>
+            <span class="pc-date">Dec 2025</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="jodhpur" style="--rot:-2deg">
+          <div class="photo-thumb" data-src="photos/jodhpur-mehrangarh.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/jodhpur-mehrangarh.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Mehrangarh Fort, Jodhpur</span>
+            <span class="pc-date">Jan 2026</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="goa" style="--rot:3deg">
+          <div class="photo-thumb" data-src="photos/goa-beach.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/goa-beach.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Palolem Beach, Goa</span>
+            <span class="pc-date">Feb 2026</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="manali" style="--rot:-1.5deg">
+          <div class="photo-thumb" data-src="photos/manali-mountains.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/manali-mountains.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Solang Valley, Manali</span>
+            <span class="pc-date">Mar 2026</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="jaipur" style="--rot:2.5deg">
+          <div class="photo-thumb" data-src="photos/jaipur-amber-fort.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/jaipur-amber-fort.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Amber Fort, Jaipur</span>
+            <span class="pc-date">Oct 2025</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo-card" data-trip="kashmir" style="--rot:1.5deg">
+          <div class="photo-thumb" data-src="photos/kashmir1.jpg">
+            <div class="thumb-placeholder">
+              <svg class="thumb-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>photos/kashmir1.jpg</span>
+            </div>
+          </div>
+          <figcaption>
+            <span class="pc-place">Kashmir</span>
+            <span class="pc-date">2026</span>
+          </figcaption>
+        </figure>
+
+      </div>
+
+      <p class="gallery-hint">
+        Cards above are wired to files in <code>photos/</code> — add your own images with the
+        same filenames (or edit the <code>data-src</code> paths in <code>photos.html</code>)
+        and they'll appear here in place of the placeholder icon.
+      </p>
+    </div>
+  </main>
+
+</div>
+
+<!-- ===== Lightbox ===== -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous photo">‹</button>
+  <div class="lb-frame" id="lbFrame"></div>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next photo">›</button>
+  <div class="lb-caption" id="lbCaption"></div>
+</div>
+
+<script src="photos.js"></script>
+</body>
+</html>
