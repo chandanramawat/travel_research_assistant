@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 const BACKEND_URL = "https://travel-research-assistant.onrender.com";
 
-// Session id: kept in memory only for this page load (no localStorage —
+// Session id: kept in memory only for this page load (no localStorage 
 // matches a fresh Streamlit session each time you reload the page).
 const sessionId = crypto.randomUUID();
 
