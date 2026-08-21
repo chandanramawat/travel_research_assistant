@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const BACKEND_URL = "https://travel-research-assistant.onrender.com";
+const BACKEND_URL = "https://travel-research-assistant.onrender.com/ask";
 
 // Session id: kept in memory only for this page load (no localStorage 
 // matches a fresh Streamlit session each time you reload the page).
