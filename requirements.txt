@@ -14,3 +14,6 @@ langchain-community
 chromadb
 sentence-transformers
 pypdf
+langfuse 
+ langchain-pinecone
+langchain-huggingface sentence-transformers

@@ -8,7 +8,9 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 import sqlite3
 from langgraph.graph import StateGraph, END
 from agents.state import AgentState
+from backend.observability.langfuse_config import langfuse_handler
 from langgraph.checkpoint.sqlite import SqliteSaver
+from tools.rag_tool import search_knowledge_base
 from tools.weather_tool import get_weather
 from tools.flight_tool import search_flights
 from dotenv import load_dotenv
@@ -30,14 +32,30 @@ def classify_intent(question: str) -> str:
     flight_keywords = ["flight", "flights", "fly from", "airfare", "plane ticket", "air ticket"]
     itinerary_keywords = ["itinerary", "day plan", "days in", "day trip", "trip plan", "plan a trip", "plan my trip"]
     weather_keywords = ["weather", "temperature", "climate", "rain", "humid"]
+    policy_keywords = ["refund", "cancellation", "cancel policy", "policy", "faq", "support", "customer care"]
 
-    if any(word in q for word in flight_keywords):
+    if any(word in q for word in policy_keywords):
+        return "policy"
+    elif any(word in q for word in flight_keywords):
         return "flight"
     elif any(word in q for word in itinerary_keywords):
         return "itinerary"
     elif any(word in q for word in weather_keywords):
         return "weather"
     return "research"
+
+
+def run_graph(input_state, session_id=None, user_id=None):
+    return get_travel_graph().invoke(
+        input_state,
+        config={
+            "callbacks": [langfuse_handler],
+            "metadata": {
+                "langfuse_session_id": session_id,
+                "langfuse_user_id": user_id,
+            },
+        },
+    )
 
 
 # Node 1 - Supervisor
@@ -147,6 +165,18 @@ def flight_node(state: AgentState) -> AgentState:
     return {**state, "research_result": flight_result}
 
 
+# Node - Policy / Knowledge Base Agent (RAG)
+def policy_node(state: AgentState) -> AgentState:
+    print(f"\n[Policy Agent] Question: {state['question']}")
+    try:
+        policy_result = search_knowledge_base.invoke({"query": state["question"]})
+        print(f"[Policy Agent] Result: {policy_result[:200]}")
+    except Exception as e:
+        policy_result = f"Policy search error: {e}"
+        print(f"[Policy Agent] Error: {e}")
+    return {**state, "research_result": policy_result}
+
+
 # Node 4 - Synthesizer
 def synthesizer_node(state: AgentState) -> AgentState:
     print(f"\n[Synthesizer] Creating final answer...")
@@ -177,6 +207,15 @@ def synthesizer_node(state: AgentState) -> AgentState:
             "error or no results, say so plainly and suggest the user check "
             "the city names or date. Do not invent prices that are not in "
             "the data provided."
+        )
+    elif tool_used == "policy":
+        system_prompt = (
+            "You are a helpful travel assistant. Answer the user's question "
+            "using ONLY the policy/knowledge base data provided below. "
+            "If the data says no relevant information was found, tell the "
+            "user plainly that you don't have that information rather than "
+            "guessing or making up an answer. Cite the source document if "
+            "one is given in the data."
         )
     else:
         system_prompt = (
@@ -214,6 +253,8 @@ def route_after_supervisor(state: AgentState) -> str:
         return "weather_agent"
     elif tool_used == "flight":
         return "flight_agent"
+    elif tool_used == "policy":
+        return "policy_agent"
     return "research_agent"
 
 
@@ -224,6 +265,7 @@ def build_graph():
     graph.add_node("research_agent", research_node)
     graph.add_node("weather_agent", weather_node)
     graph.add_node("flight_agent", flight_node)
+    graph.add_node("policy_agent", policy_node)
     graph.add_node("synthesizer", synthesizer_node)
     graph.set_entry_point("supervisor")
     graph.add_conditional_edges(
@@ -232,12 +274,14 @@ def build_graph():
         {
             "weather_agent": "weather_agent",
             "flight_agent": "flight_agent",
+            "policy_agent": "policy_agent",
             "research_agent": "research_agent",
         }
     )
     graph.add_edge("research_agent", "synthesizer")
     graph.add_edge("weather_agent", "synthesizer")
     graph.add_edge("flight_agent", "synthesizer")
+    graph.add_edge("policy_agent", "synthesizer")
     graph.add_edge("synthesizer", END)
 
     conn = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
