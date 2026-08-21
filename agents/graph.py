@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize LLM
-llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
+llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0,streaming=True)
 
 # Initialize Tavily
 tavily = TavilySearch(max_results=3)

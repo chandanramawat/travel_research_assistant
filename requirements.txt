@@ -1,3 +1,4 @@
+python
 langchain>=0.1.0
 langchain-groq>=0.1.0
 langchain-tavily>=0.1.0
@@ -18,3 +19,4 @@ langfuse
  langchain-pinecone
 langchain-huggingface
 sentence-transformers
+Python 3.10.0
