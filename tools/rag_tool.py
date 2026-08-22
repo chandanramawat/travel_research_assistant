@@ -16,7 +16,7 @@ from langchain_pinecone import PineconeVectorStore
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 HF_TOKEN = os.environ["HF_TOKEN"]
-INDEX_NAME = os.environ.get("RAG_INDEX", "tripsaarthi-policies-hf-api")
+INDEX_NAME = os.environ.get("RAG_INDEX", "tripsaarthi-policies-free")
 
 # Must match rag_ingest.py's model exactly.
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

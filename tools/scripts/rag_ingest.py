@@ -45,8 +45,7 @@ PINECONE_REGION = os.environ.get("PINECONE_REGION", "us-east-1")
 
 # New index — different from the OpenAI one and the local-HF one, since
 # each embedding model produces a different vector space/dimension.
-INDEX_NAME_DEFAULT = "tripsaarthi-policies-hf-api"
-
+INDEX_NAME_DEFAULT = "tripsaarthi-policies-free"
 LOADER_MAP = {
     ".pdf": PyPDFLoader,
     ".docx": UnstructuredWordDocumentLoader,

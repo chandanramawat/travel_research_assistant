@@ -17,4 +17,3 @@ pypdf
 langfuse 
  langchain-pinecone
 langchain-huggingface
-sentence-transformers
