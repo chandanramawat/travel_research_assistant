@@ -1,16 +1,17 @@
 """
-Inner RAG ingestion pipeline for Tripsaarthi (free, open-source embeddings).
+Inner RAG ingestion pipeline for Tripsaarthi (Hugging Face Inference API embeddings).
 
-Uses a Hugging Face sentence-transformer model that runs locally on your
-machine — no API key, no per-token cost. First run downloads the model
-(~130MB), after that it's fully offline for embedding.
+Uses Hugging Face's hosted Inference API — the embedding model runs on HF's
+servers, not on Render. This avoids both problems we hit before:
+  - No per-token cost (free, with fair-use rate limits)
+  - No local model loading, so no memory crash on Render's free tier
 
 Usage:
     python scripts/rag_ingest.py --source-dir ./knowledge_base
 
 Requirements:
-    pip install langchain langchain-community langchain-huggingface langchain-pinecone \
-                pinecone-client sentence-transformers python-dotenv \
+    pip install langchain langchain-community langchain-pinecone \
+                pinecone-client python-dotenv huggingface_hub \
                 unstructured pypdf python-docx
 """
 
@@ -28,22 +29,23 @@ from langchain_community.document_loaders import (
     TextLoader,
 )
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 
 # ---- Config -----------------------------------------------------------
 
-# bge-small is a good balance of quality vs. speed for a CPU-only laptop.
-# Swap to "BAAI/bge-large-en-v1.5" later for better quality if your machine
-# can handle it (slower, ~1.3GB download, 1024 dimensions instead of 384).
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
-
+EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"  # runs remotely on HF's servers, not locally
+HF_TOKEN = os.environ["HF_TOKEN"]
 CHUNK_SIZE = 700
 CHUNK_OVERLAP = 120
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 PINECONE_CLOUD = os.environ.get("PINECONE_CLOUD", "aws")
 PINECONE_REGION = os.environ.get("PINECONE_REGION", "us-east-1")
+
+# New index — different from the OpenAI one and the local-HF one, since
+# each embedding model produces a different vector space/dimension.
+INDEX_NAME_DEFAULT = "tripsaarthi-policies-hf-api"
 
 LOADER_MAP = {
     ".pdf": PyPDFLoader,
@@ -66,7 +68,7 @@ def load_documents(source_dir: str):
         loaded = loader_cls(str(path)).load()
         for d in loaded:
             d.metadata["source"] = str(path)
-            d.metadata["doc_type"] = path.parent.name  # e.g. "refund_policy", "faq"
+            d.metadata["doc_type"] = path.parent.name
         docs.extend(loaded)
     return docs
 
@@ -105,8 +107,8 @@ def main(source_dir: str, index_name: str):
     chunks = splitter.split_documents(raw_docs)
     print(f"Split into {len(chunks)} chunks.")
 
-    print(f"Loading embedding model '{EMBEDDING_MODEL}' (first run downloads it, then it's cached locally)...")
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    print(f"Using Hugging Face Inference API for embeddings ({EMBEDDING_MODEL}) — remote, no local download.")
+    embeddings = HuggingFaceInferenceAPIEmbeddings(api_key=HF_TOKEN, model_name=EMBEDDING_MODEL)
 
     pc = Pinecone(api_key=PINECONE_API_KEY)
     vector_size = len(embeddings.embed_query("dimension probe"))
@@ -130,7 +132,9 @@ def main(source_dir: str, index_name: str):
     store = PineconeVectorStore(index_name=index_name, embedding=embeddings, pinecone_api_key=PINECONE_API_KEY)
     ids = [c.metadata["chunk_id"] for c in to_upsert]
 
-    batch_size = 100
+    # Smaller batches here — the free Inference API can be slow/rate-limited
+    # under load, so keep batches modest and let it breathe between calls.
+    batch_size = 20
     for i in range(0, len(to_upsert), batch_size):
         batch_docs = to_upsert[i:i + batch_size]
         batch_ids = ids[i:i + batch_size]
@@ -143,6 +147,6 @@ def main(source_dir: str, index_name: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-dir", required=True)
-    parser.add_argument("--index", default="tripsaarthi-policies-free")
+    parser.add_argument("--index", default=INDEX_NAME_DEFAULT)
     args = parser.parse_args()
     main(args.source_dir, args.index)
