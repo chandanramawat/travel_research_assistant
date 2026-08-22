@@ -8,16 +8,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 app = FastAPI(title="AI travel assistant")
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "https://tripsaarthiai.vercel.app",
-    ],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+       CORSMiddleware,
+       allow_origins=["https://tripsaarthi-ml089va0p-krishna-0305.vercel.app"],
+       allow_credentials=True,
+       allow_methods=["*"],
+       allow_headers=["*"],
+   )
 
 
 # MODELS
